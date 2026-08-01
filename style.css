@@ -1,128 +1,177 @@
-/* --- Core Reset & Baseline --- */
+/* --- Core Reset & Future Baseline --- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; /* Use a futuristic font */
 }
 
 body {
-  background-color: #050505;
-  color: #ffffff;
+  background-color: #010103;
+  color: #f0f0f5;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* --- Navbar --- */
+/* Background Neural Mesh Effect (Pseudo-element) */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
+    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM4Qjk5RkYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTIwIDIwaDIwdjIwSDIWMjB6TTAgMjBoMjB2MjBIMFYyMHoyMCAwaDIwdjIwSDIwVjB6Ii8+PC9nPjwvZz48L3N2Zz4=');
+  z-index: -1;
+}
+
+/* --- Futuristic Navbar --- */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #1a1a1a;
+  padding: 15px 50px;
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 .logo {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
+  color: #fff;
+  background: linear-gradient(90deg, #fff 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .nav-links {
   display: flex;
-  gap: 30px;
+  gap: 40px;
 }
 
 .nav-links a {
-  color: #888888;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px; left: 0; width: 0; height: 2px;
+  background: #a855f7;
+  transition: width 0.3s ease;
 }
 
 .nav-links a:hover {
-  color: #ffffff;
+  color: #fff;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
 }
 
 .nav-btns {
   display: flex;
-  gap: 12px;
+  gap: 15px;
   align-items: center;
 }
 
-/* --- Buttons --- */
+/* --- Havi Buttons --- */
 .btn-primary {
-  background: #ffffff;
-  color: #000000;
-  padding: 10px 20px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #2563eb 0%, #a855f7 100%);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 50px;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15px;
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+  transform: translateY(-2px);
 }
 
 .btn-secondary {
-  background: transparent;
-  color: #ffffff;
-  border: 1px solid #333333;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background: #1a1a1a;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* --- Hero Section --- */
+/* --- Massive Hero Section --- */
 .hero {
-  padding: 100px 20px 60px;
-  max-width: 900px;
+  padding: 150px 20px;
+  max-width: 1200px;
   margin: 0 auto;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-tag {
   text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: #888;
-  margin-bottom: 20px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #a855f7;
+  margin-bottom: 25px;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.1);
+  padding: 8px 16px;
+  border-radius: 50px;
+  border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .hero h1 {
-  font-size: 56px;
-  line-height: 1.1;
-  font-weight: 700;
-  margin-bottom: 20px;
-  letter-spacing: -1.5px;
+  font-size: 80px;
+  line-height: 1;
+  font-weight: 800;
+  margin-bottom: 30px;
+  letter-spacing: -3px;
+  background: linear-gradient(180deg, #fff 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero p {
-  font-size: 18px;
-  color: #888888;
-  max-width: 600px;
-  margin: 0 auto 40px;
-  line-height: 1.5;
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 700px;
+  margin: 0 auto 50px;
+  line-height: 1.6;
 }
 
-/* --- Login Modal --- */
+/* --- Glassmorphism Login Modal (HAVI Style) --- */
 .modal {
   display: none;
   position: fixed;
@@ -131,85 +180,151 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(15px);
   align-items: center;
   justify-content: center;
 }
 
 .modal.active {
   display: flex;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
-  background: #111111;
-  border: 1px solid #222222;
-  border-radius: 12px;
-  padding: 32px;
+  background: linear-gradient(135deg, rgba(20, 20, 25, 0.9) 0%, rgba(10, 10, 15, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 40px;
   width: 90%;
-  max-width: 380px;
+  max-width: 450px;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 100px rgba(168, 85, 247, 0.15);
+  transform: translateY(0);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
 }
 
 .close-btn {
   position: absolute;
-  top: 16px;
-  right: 20px;
-  font-size: 20px;
+  top: 20px;
+  right: 25px;
+  font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.2s;
 }
 
 .close-btn:hover {
   color: #fff;
 }
 
+.modal h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.modal p {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 30px;
+    font-size: 15px;
+}
+
 .auth-btn-google {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background: #ffffff;
   color: #000000;
   border: none;
-  border-radius: 6px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
   margin-top: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.auth-btn-google:hover {
+    background: #f0f0f0;
+    transform: scale(1.02);
 }
 
 .auth-divider {
   text-align: center;
-  margin: 16px 0;
-  color: #444;
-  font-size: 12px;
+  margin: 20px 0;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  position: relative;
 }
+
+.auth-divider::before, .auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%; width: 40%; height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+.auth-divider::before { left: 0; }
+.auth-divider::after { right: 0; }
 
 .phone-input {
   width: 100%;
-  padding: 12px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 6px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   color: #fff;
-  margin-bottom: 12px;
-  font-size: 14px;
+  margin-bottom: 15px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.phone-input:focus {
+    border-color: #a855f7;
 }
 
 .phone-btn {
   width: 100%;
-  padding: 12px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 14px;
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 .phone-btn:hover {
-  background: #333;
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.5);
 }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hero h1, .hero p, .hero .nav-btns {
+    animation: slideUp 0.6s ease-out both;
+}
+.hero h1 { animation-delay: 0.1s; }
+.hero p { animation-delay: 0.2s; }
+.hero .nav-btns { animation-delay: 0.3s; }
