@@ -1,104 +1,60 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// Gemini API Configuration
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // Yahan apni asli Gemini API key paste kar do
 
-// 1. Firebase Config (Console se le kar yahan paste karein)
-const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+// Modal Logic
+const modal = document.getElementById("loginModal");
+const openBtn = document.getElementById("openLoginBtn");
+const closeBtn = document.querySelector(".close-btn");
+
+if (openBtn && modal) {
+  openBtn.onclick = () => modal.classList.add("active");
+}
+if (closeBtn && modal) {
+  closeBtn.onclick = () => modal.classList.remove("active");
+}
+window.onclick = (e) => {
+  if (e.target === modal) modal.classList.remove("active");
 };
 
-// 2. Google Gemini API Key
-const GEMINI_API_KEY = window.ENV_GEMINI_KEY || "YOUR_GEMINI_API_KEY";
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-
-// --- Modal Handling ---
-const loginModal = document.getElementById('loginModal');
-const openLoginBtn = document.getElementById('openLoginBtn');
-const closeLoginBtn = document.getElementById('closeLoginBtn');
-
-if(openLoginBtn) openLoginBtn.onclick = () => loginModal.style.display = 'flex';
-if(closeLoginBtn) closeLoginBtn.onclick = () => loginModal.style.display = 'none';
-
-// --- Auth State Check ---
-onAuthStateChanged(auth, (user) => {
-  const userNameElem = document.getElementById('userName');
-  const logoutBtn = document.getElementById('logoutBtn');
-  
-  if (user) {
-    if(userNameElem) userNameElem.innerText = user.displayName || user.phoneNumber || "User";
-    if(logoutBtn) logoutBtn.style.display = "block";
-    if(loginModal) loginModal.style.display = 'none';
-  } else {
-    if(userNameElem) userNameElem.innerText = "Guest User";
-    if(logoutBtn) logoutBtn.style.display = "none";
-  }
-});
-
-// Google Login
-const googleBtn = document.getElementById('googleLoginBtn');
-if(googleBtn) {
-  googleBtn.addEventListener('click', () => {
-    signInWithPopup(auth, googleProvider).catch(err => alert(err.message));
-  });
-}
-
-// Logout
-const logoutBtn = document.getElementById('logoutBtn');
-if(logoutBtn) {
-  logoutBtn.addEventListener('click', () => signOut(auth));
-}
-
-// --- AI Chat Logic ---
-const sendBtn = document.getElementById('sendBtn');
-const userInput = document.getElementById('userInput');
-const chatBox = document.getElementById('chatBox');
-
-if(sendBtn) {
-  sendBtn.addEventListener('click', sendMessage);
-  userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
-}
-
+// Chat Functionality
 async function sendMessage() {
-  const text = userInput.value.trim();
-  if(!text) return;
+  const input = document.getElementById("userInput");
+  const chatBox = document.getElementById("chatBox");
+  if (!input || !chatBox) return;
 
-  // Render User Message
-  appendMessage(text, 'user-message');
-  userInput.value = '';
+  const text = input.value.trim();
+  if (!text) return;
 
-  // Render Loading Indicator
-  const loadingElem = appendMessage("Fadden AI thinking...", 'ai-message');
+  // Show User Message
+  const userMsg = document.createElement("div");
+  userMsg.className = "message user-msg";
+  userMsg.innerText = text;
+  chatBox.appendChild(userMsg);
+  input.value = "";
+
+  // Show Loading
+  const aiMsg = document.createElement("div");
+  aiMsg.className = "message ai-msg";
+  aiMsg.innerText = "Thinking...";
+  chatBox.appendChild(aiMsg);
+  chatBox.scrollTop = chatBox.scrollHeight;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: text }] }]
       })
     });
-
-    const data = await response.json();
-    const reply = data.candidates[0].content.parts[0].text;
-    loadingElem.innerText = reply;
-  } catch (error) {
-    loadingElem.innerText = "Error: Please check your Gemini API key in script.js!";
+    const data = await res.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      aiMsg.innerText = data.candidates[0].content.parts[0].text;
+    } else {
+      aiMsg.innerText = "Error: Invalid response from Gemini API.";
+    }
+  } catch (err) {
+    aiMsg.innerText = "Error connecting to AI service.";
   }
-}
-
-function appendMessage(text, className) {
-  const msgDiv = document.createElement('div');
-  msgDiv.className = `message ${className}`;
-  msgDiv.innerText = text;
-  chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
-  return msgDiv;
 }
