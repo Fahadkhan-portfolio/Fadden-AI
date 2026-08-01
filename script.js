@@ -1,5 +1,5 @@
 // Gemini API Configuration
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // Yahan apni asli Gemini API key paste kar do
+const GEMINI_API_KEY = "AQ.Ab8RN6KCZpfDfJArwhN03oBHTDmqwdrUxI3dEG1Lznjdg1vhUQ"; // Yahan apni asli Gemini API key paste kar do
 
 // Modal Logic
 const modal = document.getElementById("loginModal");
