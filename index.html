@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ 
+  <!-- ============================================================
+       SEO META TAGS
+       ============================================================ -->
+  <title>Fadden AI — One Workspace. Every AI Tool.</title>
+  <meta name="description" content="Fadden AI is the all-in-one AI workspace for students, developers, creators, freelancers, and businesses. Chat, code, write, and create — powered by every major AI model in one place." />
+  <meta name="keywords" content="Fadden AI, AI workspace, AI chat, AI for developers, AI for students, multi-model AI, AI productivity tool" />
+  <meta name="author" content="Fadden AI" />
+  <meta name="robots" content="index, follow" />
+ 
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Fadden AI — One Workspace. Every AI Tool." />
+  <meta property="og:description" content="Chat, code, write, and create with every major AI model — in one premium workspace built for students, developers, creators, and businesses." />
+  <meta property="og:site_name" content="Fadden AI" />
+ 
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Fadden AI — One Workspace. Every AI Tool." />
+  <meta name="twitter:description" content="Chat, code, write, and create with every major AI model — in one premium workspace." />
+ 
+  <!-- Favicon (placeholder — replace with real asset before launch) -->
+  <link rel="icon" href="data:,">
+ 
+  <!-- Fonts: Space Grotesk (display/headline) + Inter (body/UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+ 
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ 
+  <!-- ============================================================
+       LOADING SCREEN
+       Shown on initial load, hidden by script.js once the page
+       (and fonts) are ready. Pure CSS/JS, no external assets.
+       ============================================================ -->
+  <div id="loading-screen" aria-hidden="true">
+    <div class="loader-mark">
+      <span class="loader-ring"></span>
+      <span class="loader-dot"></span>
+    </div>
+    <p class="loader-text">Fadden AI</p>
+  </div>
+ 
+  <!-- ============================================================
+       AMBIENT BACKGROUND (signature visual element)
+       Fixed, decorative, non-interactive glow layer that sits
+       behind all content — the "AI workspace" atmosphere.
+       ============================================================ -->
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="aurora aurora--one"></div>
+    <div class="aurora aurora--two"></div>
+    <div class="grain"></div>
+  </div>
+ 
+  <!-- ============================================================
+       NAVBAR
+       ============================================================ -->
+  <header class="navbar" id="navbar">
+    <div class="navbar__inner container">
+      <a href="#top" class="navbar__brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Fadden<span class="brand-accent">AI</span></span>
+      </a>
+ 
+      <nav class="navbar__links" id="navLinks" aria-label="Primary">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#why" class="nav-link">Why Fadden</a>
+        <a href="#footer" class="nav-link">Contact</a>
+      </nav>
+ 
+      <div class="navbar__actions">
+        <a href="#top" class="btn btn--ghost">Sign in</a>
+        <a href="#top" class="btn btn--primary">Get started</a>
+      </div>
+ 
+      <!-- Mobile menu toggle -->
+      <button class="navbar__toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+ 
+    <!-- Mobile slide-down menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#features" class="mobile-menu__link">Features</a>
+      <a href="#why" class="mobile-menu__link">Why Fadden</a>
+      <a href="#footer" class="mobile-menu__link">Contact</a>
+      <div class="mobile-menu__actions">
+        <a href="#top" class="btn btn--ghost btn--block">Sign in</a>
+        <a href="#top" class="btn btn--primary btn--block">Get started</a>
+      </div>
+    </div>
+  </header>
+ 
+  <main id="top">
+ 
+    <!-- ============================================================
+         HERO SECTION
+         ============================================================ -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <p class="eyebrow reveal" data-reveal>All your AI tools. One workspace.</p>
+ 
+        <h1 class="hero__title reveal" data-reveal>
+          Stop switching tabs.<br />
+          Start <span class="text-accent">building with AI</span>.
+        </h1>
+ 
+        <p class="hero__subtitle reveal" data-reveal>
+          Fadden AI brings chat, code generation, document analysis, and content
+          creation into one premium workspace — powered by multiple leading AI
+          models, built for students, developers, creators, and teams.
+        </p>
+ 
+        <div class="hero__actions reveal" data-reveal>
+          <a href="#top" class="btn btn--primary btn--lg">Get started free</a>
+          <a href="#features" class="btn btn--ghost btn--lg">See what's inside</a>
+        </div>
+ 
+        <!-- Glass preview panel — signature glassmorphism moment -->
+        <div class="hero__panel glass reveal" data-reveal>
+          <div class="hero__panel-bar">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="hero__panel-title">Fadden AI — Chat</span>
+          </div>
+          <div class="hero__panel-body">
+            <div class="chat-line chat-line--user">Summarize this contract and flag any risky clauses.</div>
+            <div class="chat-line chat-line--ai">
+              Here's the summary — three clauses worth a second look, starting
+              with the termination terms in section 4.
+            </div>
+            <div class="chat-line chat-line--user">Now turn it into a client-friendly email.</div>
+            <div class="chat-line chat-line--ai chat-line--typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ============================================================
+         FEATURES SECTION
+         ============================================================ -->
+    <section class="features" id="features">
+      <div class="container">
+        <p class="eyebrow reveal" data-reveal>What's inside</p>
+        <h2 class="section-title reveal" data-reveal>Everything you switch tabs for, in one place</h2>
+        <p class="section-subtitle reveal" data-reveal>
+          Fadden AI's first release focuses on doing the core workflow — chat,
+          upload, and generate — better than anything you're patching together today.
+        </p>
+ 
+        <div class="features__grid">
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-4-1L3 20l1.1-5.3A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>AI Chat</h3>
+            <p>Fast, streaming conversation with full context — ask, iterate, and refine without losing the thread.</p>
+          </article>
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l3 8 4-16 3 8h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Multiple AI Models</h3>
+            <p>Pick the right model for the job, per conversation — a fast model for quick answers, a deeper one for hard problems.</p>
+          </article>
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Chat History</h3>
+            <p>Every conversation is saved and searchable — pick up exactly where you left off, on any device.</p>
+          </article>
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Image &amp; File Upload</h3>
+            <p>Drop in a screenshot, a PDF, or a spreadsheet — Fadden reads it and uses it as real context, not a guess.</p>
+          </article>
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m8 9 3 3-3 3M14 15h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+            </div>
+            <h3>Markdown &amp; Code Highlighting</h3>
+            <p>Responses render properly — tables, lists, and syntax-highlighted code, exactly as they should look.</p>
+          </article>
+ 
+          <article class="feature-card glass reveal" data-reveal>
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 3v9l6 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Copy &amp; Regenerate</h3>
+            <p>Didn't land right? Regenerate without losing your original — every answer branches, nothing gets overwritten.</p>
+          </article>
+ 
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ============================================================
+         WHY CHOOSE FADDEN AI SECTION
+         ============================================================ -->
+    <section class="why" id="why">
+      <div class="container why__inner">
+        <div class="why__copy">
+          <p class="eyebrow reveal" data-reveal>Why Fadden</p>
+          <h2 class="section-title reveal" data-reveal>Built as a workspace, not a wrapper</h2>
+          <p class="section-subtitle reveal" data-reveal>
+            Most AI tools give you a single chat box tied to a single model.
+            Fadden AI is designed so your work — history, files, and context —
+            compounds the longer you use it.
+          </p>
+ 
+          <ul class="why__list">
+            <li class="why__item reveal" data-reveal>
+              <span class="why__item-icon" aria-hidden="true">✓</span>
+              <div>
+                <h4>Not locked to one AI model</h4>
+                <p>Switch between models freely — your work isn't hostage to one provider's pricing or outages.</p>
+              </div>
+            </li>
+            <li class="why__item reveal" data-reveal>
+              <span class="why__item-icon" aria-hidden="true">✓</span>
+              <div>
+                <h4>Your context, kept</h4>
+                <p>Chats, uploads, and history live in one account — not scattered across five different apps.</p>
+              </div>
+            </li>
+            <li class="why__item reveal" data-reveal>
+              <span class="why__item-icon" aria-hidden="true">✓</span>
+              <div>
+                <h4>Built for real work, not demos</h4>
+                <p>Fast, responsive, and reliable enough for daily use — by students, developers, and teams alike.</p>
+              </div>
+            </li>
+            <li class="why__item reveal" data-reveal>
+              <span class="why__item-icon" aria-hidden="true">✓</span>
+              <div>
+                <h4>Grows with you</h4>
+                <p>Start with chat today; the same workspace expands into documents, content, and more over time.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+ 
+        <div class="why__visual reveal" data-reveal>
+          <div class="glass why__stat-card">
+            <span class="why__stat-num">6+</span>
+            <span class="why__stat-label">user types served — from first-year students to small business teams</span>
+          </div>
+          <div class="glass why__stat-card why__stat-card--offset">
+            <span class="why__stat-num">1</span>
+            <span class="why__stat-label">workspace instead of five separate subscriptions</span>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ============================================================
+         FINAL CTA
+         ============================================================ -->
+    <section class="cta">
+      <div class="container cta__inner glass reveal" data-reveal>
+        <h2>Your AI workspace is ready.</h2>
+        <p>Create a free account and send your first message in under a minute.</p>
+        <a href="#top" class="btn btn--primary btn--lg">Get started free</a>
+      </div>
+    </section>
+ 
+  </main>
+ 
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer" id="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <a href="#top" class="navbar__brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">Fadden<span class="brand-accent">AI</span></span>
+        </a>
+        <p class="footer__tagline">One workspace. Every AI tool.</p>
+      </div>
+ 
+      <div class="footer__col">
+        <h5>Product</h5>
+        <a href="#features">Features</a>
+        <a href="#why">Why Fadden</a>
+        <a href="#top">Pricing</a>
+      </div>
+ 
+      <div class="footer__col">
+        <h5>Company</h5>
+        <a href="#top">About</a>
+        <a href="#top">Blog</a>
+        <a href="#footer">Contact</a>
+      </div>
+ 
+      <div class="footer__col">
+        <h5>Legal</h5>
+        <a href="#top">Privacy Policy</a>
+        <a href="#top">Terms of Service</a>
+      </div>
+    </div>
+ 
+    <div class="container footer__bottom">
+      <p>© <span id="year"></span> Fadden AI. All rights reserved.</p>
+    </div>
+  </footer>
+ 
+  <!-- Script -->
+  <script src="script.js"></script>
+</body>
+</html>
+ 
