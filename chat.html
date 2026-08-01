@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fadden AI - Chat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="chat-body">
+
+  <div class="chat-container">
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="logo"><a href="index.html" style="color:white; text-decoration:none;">FaddenAI Chat</a></div>
+      <div class="user-info">
+        <span id="userName">Guest User</span>
+        <button id="logoutBtn" class="btn-secondary" style="display:none;">Logout</button>
+      </div>
+    </header>
+
+    <!-- Chat Messages Box -->
+    <div class="chat-box" id="chatBox">
+      <div class="message ai-message">
+        Hello! I am Fadden AI. How can I help you today?
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="chat-input-container">
+      <input type="text" id="userInput" placeholder="Ask Fadden AI anything..." />
+      <button id="sendBtn" class="btn-primary">Send</button>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
