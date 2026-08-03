@@ -1,69 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fadden AI - Workspace</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>FaddenAI</title>
+<meta name="theme-color" content="#0B0E14" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="logo">FaddenAI</div>
-    <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#why">Why Fadden</a>
-      <a href="#contact">Contact</a>
+  <!-- ===== Header ===== -->
+  <header class="topbar">
+    <div class="topbar__left">
+      <button id="menuToggle" class="iconBtn onlyMobile" aria-label="Open menu" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">FaddenAI</span>
+      </div>
     </div>
-    <div class="nav-btns">
-      <button class="btn-secondary" id="openLoginBtn">Sign in</button>
-      <a href="chat.html" class="btn-primary">Get started</a>
-    </div>
-  </nav>
 
-  <!-- Hero Section -->
-  <header class="hero">
-    <p class="tagline">ALL YOUR AI TOOLS. ONE WORKSPACE.</p>
-    <h1>Stop switching tabs.<br>Start building <span>with AI</span>.</h1>
-    <p class="subtext">
-      Fadden AI brings chat, code generation, document analysis, and content creation into one premium workspace.
-    </p>
-    <div class="hero-btns">
-      <a href="chat.html" class="btn-primary-large">Get started free</a>
-      <a href="#features" class="btn-secondary-large">See what's inside</a>
+    <nav class="navlinks" id="navlinks" aria-label="Primary">
+      <button class="navlink is-active" data-view="chat" type="button">Chat</button>
+      <button class="navlink" data-view="explore" type="button">Explore</button>
+      <button class="navlink" data-view="history" type="button">History</button>
+      <button class="navlink" data-view="settings" type="button">Settings</button>
+    </nav>
+
+    <div class="topbar__right">
+      <button id="themeToggle" class="iconBtn themeToggle" aria-label="Toggle dark and light theme" title="Toggle theme">
+        <span class="themeToggle__sun" aria-hidden="true">☀️</span>
+        <span class="themeToggle__moon" aria-hidden="true">🌙</span>
+      </button>
+      <button id="newChatBtn" class="btn btn--ghost onlyDesktop" type="button">New chat</button>
     </div>
   </header>
 
-  <!-- Login Modal Popup -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal-content">
-      <span class="close-btn" id="closeLoginBtn">&times;</span>
-      <h2>Welcome to Fadden AI</h2>
-      <p>Sign in to unlock all features</p>
-      
-      <button class="social-login-btn google-btn" id="googleLoginBtn">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
-        Continue with Google
-      </button>
-
-      <div class="divider">OR</div>
-
-      <div class="phone-login-box">
-        <input type="tel" id="phoneNumber" placeholder="+923001234567" />
-        <button class="btn-primary" id="sendOtpBtn">Send OTP</button>
-      </div>
-
-      <div id="recaptcha-container"></div>
-
-      <div class="phone-login-box" id="otpBox" style="display: none; margin-top: 10px;">
-        <input type="text" id="otpCode" placeholder="Enter 6-digit OTP" />
-        <button class="btn-primary" id="verifyOtpBtn">Verify OTP</button>
-      </div>
-    </div>
+  <!-- ===== Mobile nav drawer ===== -->
+  <div id="mobileDrawer" class="mobileDrawer" aria-hidden="true">
+    <button class="navlink is-active" data-view="chat" type="button">Chat</button>
+    <button class="navlink" data-view="explore" type="button">Explore</button>
+    <button class="navlink" data-view="history" type="button">History</button>
+    <button class="navlink" data-view="settings" type="button">Settings</button>
+    <button class="btn btn--ghost" id="newChatBtnMobile" type="button">New chat</button>
   </div>
+  <div id="drawerScrim" class="drawerScrim" hidden></div>
 
-  <!-- Scripts -->
-  <script type="module" src="script.js"></script>
+  <!-- ===== Main views ===== -->
+  <main class="app">
+
+    <!-- Chat view -->
+    <section class="view is-active" data-view-panel="chat" id="chatPanel">
+      <div class="chatScroll" id="chatScroll">
+        <div class="emptyState" id="emptyState">
+          <span class="emptyState__mark" aria-hidden="true"></span>
+          <h1>What can I help you build today?</h1>
+          <p>Ask FaddenAI anything — code, writing, ideas, or a quick answer.</p>
+          <div class="suggestions">
+            <button class="chip" type="button" data-suggest="Explain how async/await works in JavaScript, with an example.">Explain async/await</button>
+            <button class="chip" type="button" data-suggest="Give me 5 catchy taglines for an AI chat app called FaddenAI.">Taglines for FaddenAI</button>
+            <button class="chip" type="button" data-suggest="Write a Python function that reverses a linked list.">Reverse a linked list</button>
+          </div>
+        </div>
+        <div class="messages" id="messages" role="log" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Explore view -->
+    <section class="view" data-view-panel="explore">
+      <div class="placeholderView">
+        <h2>Explore</h2>
+        <p>Prompt packs and saved templates will live here.</p>
+      </div>
+    </section>
+
+    <!-- History view -->
+    <section class="view" data-view-panel="history">
+      <div class="placeholderView">
+        <h2>History</h2>
+        <p>Your past conversations will show up here once chats are saved.</p>
+      </div>
+    </section>
+
+    <!-- Settings view -->
+    <section class="view" data-view-panel="settings">
+      <div class="placeholderView">
+        <h2>Settings</h2>
+        <p>Model, theme, and account preferences.</p>
+        <div class="settingsRow">
+          <span>Appearance</span>
+          <button class="btn btn--ghost" id="settingsThemeBtn" type="button">Toggle theme</button>
+        </div>
+        <div class="settingsRow">
+          <span>Model</span>
+          <span class="modelTag">google/gemini-2.0-flash-lite-preview-02-05:free</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Composer (fixed bottom bar, chat view only) ===== -->
+  <form class="composer" id="composerForm">
+    <div class="composer__inner">
+      <textarea
+        id="promptInput"
+        class="composer__input"
+        placeholder="Message FaddenAI…"
+        rows="1"
+        autocomplete="off"
+        aria-label="Message FaddenAI"
+      ></textarea>
+      <button type="submit" class="sendBtn" id="sendBtn" aria-label="Send message">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="composer__hint">FaddenAI can make mistakes. Check important info.</p>
+  </form>
+
+  <script src="script.js"></script>
 </body>
 </html>
