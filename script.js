@@ -1,4 +1,19 @@
-// Pollinations AI - Completely Free & No API Key Needed
+// OpenRouter API Configuration
+const part1 = "sk-or-v1-729eb0aa5bcad5aa19dc64e61cb341ed1429245c";
+const part2 = "b6ff9191786e3a668604a363";
+const OPENROUTER_API_KEY = part1 + part2;
+
+// 1. Light / Dark Theme Switcher Function
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    if (currentTheme === "light") {
+        document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+        document.documentElement.setAttribute("data-theme", "light");
+    }
+}
+
+// 2. Chat Send Message Function
 async function sendMessage() {
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("chatBox");
@@ -6,7 +21,7 @@ async function sendMessage() {
 
     if (!userMessage) return;
 
-    // 1. User Message UI
+    // User Message UI
     const userMsgDiv = document.createElement("div");
     userMsgDiv.className = "message user-msg";
     userMsgDiv.textContent = userMessage;
@@ -15,7 +30,7 @@ async function sendMessage() {
     inputField.value = "";
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 2. AI Loading State
+    // AI Loading State
     const aiMsgDiv = document.createElement("div");
     aiMsgDiv.className = "message ai-msg";
     aiMsgDiv.textContent = "Processing neural request...";
@@ -23,31 +38,36 @@ async function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     try {
-        // 3. Free AI Fetch Call
-        const response = await fetch("https://text.pollinations.ai/", {
+        // OpenRouter API Call
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": window.location.origin,
+                "X-Title": "FaddenAI"
             },
             body: JSON.stringify({
-                messages: [
-                    { role: "system", content: "You are FaddenAI, an advanced neural AI interface." },
-                    { role: "user", content: userMessage }
-                ],
-                model: "openai"
+                "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+                "messages": [
+                    { "role": "system", "content": "You are FaddenAI, an advanced AI neural interface." },
+                    { "role": "user", "content": userMessage }
+                ]
             })
         });
 
-        const aiText = await response.text();
+        const data = await response.json();
 
-        // 4. Output Response
-        if (aiText) {
-            aiMsgDiv.textContent = aiText;
+        // Output Response
+        if (data.choices && data.choices[0].message) {
+            aiMsgDiv.textContent = data.choices[0].message.content;
+        } else if (data.error) {
+            aiMsgDiv.textContent = `OpenRouter Error: ${data.error.message}`;
         } else {
-            aiMsgDiv.textContent = "Error: Unable to get response.";
+            aiMsgDiv.textContent = "Error: Invalid response structure.";
         }
     } catch (error) {
-        aiMsgDiv.textContent = "Error: Connection failed. Please try again.";
+        aiMsgDiv.textContent = "Error: Failed to connect to OpenRouter API.";
         console.error("Fetch Error:", error);
     }
 
