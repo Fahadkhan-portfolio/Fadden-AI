@@ -101,7 +101,7 @@
   const promptInput = document.getElementById("promptInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  const MODEL = "google/gemini-2.0-flash-lite-preview-02-05:free";
+  const MODEL = "openrouter/free";
   const history = []; // { role: 'user' | 'assistant', content: string }
 
   function autoResize() {
