@@ -1,0 +1,25 @@
+# FaddenAI
+
+## Files
+- `index.html` — page structure (header, nav, chat area, composer)
+- `style.css` — all styling, mobile-first, dark/light theme via CSS variables
+- `script.js` — theme toggle, view routing, chat logic
+- `api/chat.js` — Vercel serverless function that calls OpenRouter server-side
+- `.env.example` — shows the one env var you need to set
+
+## Deploy on Vercel
+1. Replace your existing `index.html`, `style.css`, `script.js` with these files,
+   and add the `api/chat.js` file (create the `api` folder if it doesn't exist).
+2. In the Vercel dashboard: **Project → Settings → Environment Variables**, add:
+   - `OPENROUTER_API_KEY` = your key from https://openrouter.ai/keys
+3. Redeploy. The frontend calls `/api/chat`, which is the only place the key is used —
+   it never appears in any file in your repo, so GitHub's push protection won't block your commits.
+4. Model is set to `google/gemini-2.0-flash-lite-preview-02-05:free` in `script.js` (`MODEL` constant) —
+   change it there if you want a different OpenRouter model.
+
+## What was fixed vs. the old version
+- Mobile viewport meta tag added; layout is mobile-first with no fixed widths that overflow.
+- Nav collapses into a slide-in drawer under 720px, with a scrim to close it — no more broken navbar.
+- Every nav link, the theme toggle, "New chat," and suggestion chips have real click handlers — nothing is a dead link.
+- No sign-in/OTP modals are included at all, so there's nothing to overlap the screen.
+- `overflow-x: hidden` + `box-sizing: border-box` everywhere removes the horizontal scroll bug.
