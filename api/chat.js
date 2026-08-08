@@ -5,7 +5,7 @@
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
 
 // ---------------------------------------------------------------------
 // System prompt: casual, direct, and helpful — not preachy, not padded
