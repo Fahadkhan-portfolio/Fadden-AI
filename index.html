@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <title>FaddenAI</title>
+<!-- SVG Favicon with Glowing Gradient "F" Logo -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><path d='M28 24h44v12H42v12h24v12H42v24H28V24z' fill='url(%23g)'/><defs><linearGradient id='g' x1='0' y1='0' x2='100' y2='100'><stop offset='0%25' stop-color='%236366f1'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -22,9 +24,6 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">FaddenAI</span>
       </div>
-      <button class="icon-btn sidebar-collapse-btn" id="collapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
     </div>
 
     <button class="new-chat-btn" id="newChatBtn">
@@ -64,10 +63,18 @@
         <button class="model-pill" id="modelPill">
           <span class="model-dot"></span>
           <span id="modelName">FaddenAI &middot; Nova-1</span>
-          <svg viewBox="0 0 24 24" fill="none" class="chev"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
       <div class="header-right">
+        <div class="export-wrap">
+          <button class="icon-btn" id="exportBtn" aria-label="Export chat" title="Export chat">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="export-menu" id="exportMenu">
+            <button class="export-item" id="exportMdBtn">Export as Markdown (.md)</button>
+            <button class="export-item" id="exportTxtBtn">Export as Text (.txt)</button>
+          </div>
+        </div>
         <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
           <svg viewBox="0 0 24 24" fill="none" class="icon-sun"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           <svg viewBox="0 0 24 24" fill="none" class="icon-moon"><path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
@@ -136,12 +143,112 @@
         <button class="composer-btn send-btn" id="sendBtn" aria-label="Send message" disabled>
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
+
+        <button class="composer-btn stop-btn" id="stopBtn" aria-label="Stop generating" title="Stop generating" hidden>
+          <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+        </button>
       </div>
       <p class="composer-hint">FaddenAI can make mistakes. Check anything that matters.</p>
     </div>
 
   </div>
 </div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-backdrop" id="settingsBackdrop">
+  <div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-header">
+      <h2 id="settingsTitle">Settings</h2>
+      <button class="icon-btn" id="settingsCloseBtn" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="settings-group">
+        <label for="personaInput">System persona</label>
+        <p class="settings-hint">Customize how FaddenAI behaves — tone, role, constraints. Left blank, it uses the default direct/casual persona.</p>
+        <textarea id="personaInput" class="settings-textarea" rows="4" placeholder="e.g. You are a terse senior engineer who only answers in code + one-line explanations."></textarea>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-row">
+          <label for="temperatureInput">Temperature</label>
+          <span class="settings-value" id="temperatureValue">0.8</span>
+        </div>
+        <p class="settings-hint">Lower is more focused and predictable. Higher is more creative and varied.</p>
+        <input type="range" id="temperatureInput" class="settings-slider" min="0.1" max="1.0" step="0.1" value="0.8">
+      </div>
+
+      <div class="settings-group">
+        <label>Chat data</label>
+        <p class="settings-hint">All chats are stored locally in this browser. This can't be undone.</p>
+        <button class="danger-btn" id="clearHistoryBtn">Clear all history</button>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="secondary-btn" id="settingsCancelBtn">Cancel</button>
+      <button class="primary-btn" id="settingsSaveBtn">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EXPLORE MODAL ============ -->
+<div class="modal-backdrop" id="exploreBackdrop">
+  <div class="modal" id="exploreModal" role="dialog" aria-modal="true" aria-labelledby="exploreTitle">
+    <div class="modal-header">
+      <h2 id="exploreTitle">Explore prompts</h2>
+      <button class="icon-btn" id="exploreCloseBtn" aria-label="Close explore">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="explore-category">
+        <h3>Write &amp; edit</h3>
+        <div class="explore-grid">
+          <button class="explore-card" data-prompt="Rewrite this paragraph to be punchier and cut it by a third — I'll paste it after you respond.">Punch up my writing</button>
+          <button class="explore-card" data-prompt="Write a cold outreach email for a freelance web developer reaching out to a small business owner.">Cold outreach email</button>
+          <button class="explore-card" data-prompt="Proofread and tighten this for grammar and clarity — I'll paste it next.">Proofread &amp; tighten</button>
+        </div>
+      </div>
+      <div class="explore-category">
+        <h3>Code &amp; build</h3>
+        <div class="explore-grid">
+          <button class="explore-card" data-prompt="Review this function for bugs and edge cases — I'll paste the code next.">Code review</button>
+          <button class="explore-card" data-prompt="Explain the difference between SQL and NoSQL databases with a concrete example of when to use each.">SQL vs NoSQL</button>
+          <button class="explore-card" data-prompt="Write a regex that validates an email address and explain each part.">Explain a regex</button>
+        </div>
+      </div>
+      <div class="explore-category">
+        <h3>Think &amp; learn</h3>
+        <div class="explore-grid">
+          <button class="explore-card" data-prompt="Give me a mental model for thinking about compound interest that actually sticks.">Mental model: compound interest</button>
+          <button class="explore-card" data-prompt="Steelman the strongest argument against the position I'm about to describe — I'll paste it next.">Steelman an argument</button>
+          <button class="explore-card" data-prompt="Explain how a neural network learns, using an analogy a 12-year-old could follow.">Explain neural networks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DIALOG (delete chat) ============ -->
+<div class="modal-backdrop" id="confirmBackdrop">
+  <div class="modal modal-sm" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-header">
+      <h2 id="confirmTitle">Delete chat?</h2>
+    </div>
+    <div class="modal-body">
+      <p class="settings-hint" id="confirmBody">This chat will be permanently deleted. This can't be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="secondary-btn" id="confirmCancelBtn">Cancel</button>
+      <button class="danger-btn" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script src="script.js"></script>
 </body>
