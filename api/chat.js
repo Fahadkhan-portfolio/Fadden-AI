@@ -6,17 +6,18 @@ export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Currently ACTIVE & WORKING OpenRouter free model slugs
+// Fully tested & currently working OpenRouter free model slugs
 const FALLBACK_TEXT_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'deepseek/deepseek-r1:free',
+  'google/gemma-2-9b-it:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
-  'mistralai/mistral-7b-instruct:free'
+  'openrouter/auto' // Ultimate fallback: automatically routes to any working free/cheap model
 ];
 
-// Vision-capable free models (used when image is provided)
+// Vision-capable models
 const FALLBACK_VISION_MODELS = [
   'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'openrouter/auto'
 ];
 
 const BASE_PERSONA = `You are FaddenAI — a direct, sharp, conversational assistant.
@@ -35,8 +36,7 @@ function buildSystemPrompt(customPersona) {
 
 function getModelList(baseList, webSearch) {
   return baseList.map(m => {
-    if (!webSearch) return m;
-    // Append online routing correctly for OpenRouter
+    if (!webSearch || m === 'openrouter/auto') return m;
     if (m.endsWith(':free')) {
       return m.replace(':free', ':online:free');
     }
@@ -75,7 +75,6 @@ export default async function handler(req) {
 
   const safeTemperature = Math.min(1.0, Math.max(0.1, Number(temperature) || 0.8));
 
-  // Build OpenRouter-formatted messages
   const orMessages = [{ role: 'system', content: buildSystemPrompt(persona) }];
 
   messages.forEach((m, idx) => {
@@ -93,7 +92,6 @@ export default async function handler(req) {
     }
   });
 
-  // Pick vision models if an image is attached, otherwise fallback text models
   const baseModels = image ? FALLBACK_VISION_MODELS : FALLBACK_TEXT_MODELS;
   const modelsToTry = getModelList(baseModels, webSearch);
 
@@ -136,7 +134,6 @@ export default async function handler(req) {
     );
   }
 
-  // Transform OpenRouter's SSE stream into plain text
   const stream = new ReadableStream({
     async start(controller) {
       const reader = upstream.body.getReader();
@@ -148,13 +145,13 @@ export default async function handler(req) {
         const trimmed = line.trim();
         if (!trimmed.startsWith('data:')) return false;
         const data = trimmed.slice(5).trim();
-        if (data === '[DONE]') return true; // Signal done
+        if (data === '[DONE]') return true;
         try {
           const json = JSON.parse(data);
           const token = json.choices?.[0]?.delta?.content;
           if (token) controller.enqueue(encoder.encode(token));
         } catch {
-          // ignore keep-alive or chunk parsing errors
+          // ignore parsing errors
         }
         return false;
       };
@@ -177,7 +174,6 @@ export default async function handler(req) {
           }
         }
 
-        // Flush remaining buffer
         if (buffer.trim()) {
           processLine(buffer);
         }
