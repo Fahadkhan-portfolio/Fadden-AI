@@ -1,244 +1,470 @@
-/* =========================================================
-   FaddenAI — client script
-   - toggleTheme(): dark/light switch, persisted
-   - view routing: nav buttons swap panels, no dead links
-   - sendMessage(): calls our own /api/chat serverless route,
-     which holds the OpenRouter key server-side. No key ever
-     lives in this file, so GitHub's secret scanner has
-     nothing to flag and the key never ships to the browser.
-   ========================================================= */
+/* ============================================================
+   FaddenAI — client logic (vanilla JS, no framework)
+   ============================================================ */
 
 (() => {
-  "use strict";
+  'use strict';
 
-  const root = document.documentElement;
-  const THEME_KEY = "faddenai-theme";
+  /* ---------- DOM refs ---------- */
+  const $ = (id) => document.getElementById(id);
 
-  /* ---------------- Theme ---------------- */
-  function applyTheme(theme) {
-    root.setAttribute("data-theme", theme);
-    localStorage.setItem(THEME_KEY, theme);
+  const sidebar        = $('sidebar');
+  const collapseBtn    = $('collapseBtn');
+  const menuBtn        = $('menuBtn');
+  const scrim          = $('scrim');
+  const newChatBtn     = $('newChatBtn');
+  const chatHistoryEl  = $('chatHistory');
+  const exploreBtn     = $('exploreBtn');
+  const settingsBtn    = $('settingsBtn');
+
+  const themeToggle    = $('themeToggle');
+  const modelPill      = $('modelPill');
+
+  const chatWindow     = $('chatWindow');
+  const messagesEl     = $('messages');
+  const emptyState     = $('emptyState');
+
+  const composer       = $('composer');
+  const promptInput    = $('promptInput');
+  const sendBtn        = $('sendBtn');
+  const micBtn         = $('micBtn');
+  const plusBtn        = $('plusBtn');
+  const plusMenu       = $('plusMenu');
+  const uploadImageBtn = $('uploadImageBtn');
+  const webSearchBtn   = $('webSearchBtn');
+  const webSearchToggle= $('webSearchToggle');
+  const imageGenBtn    = $('imageGenBtn');
+  const fileInput      = $('fileInput');
+  const attachmentPreview = $('attachmentPreview');
+
+  /* ---------- state ---------- */
+  const STORAGE_KEY = 'faddenai.chats.v1';
+  const THEME_KEY   = 'faddenai.theme';
+
+  let state = {
+    chats: {},        // id -> { id, title, messages: [{role, content, image?}] }
+    activeChatId: null,
+    webSearchOn: false,
+    pendingImage: null,   // { dataUrl, name }
+    isStreaming: false,
+  };
+
+  /* ---------- persistence ---------- */
+  function loadChats() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) state.chats = JSON.parse(raw);
+    } catch (e) { console.warn('Could not load chat history', e); }
+  }
+  function saveChats() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.chats)); }
+    catch (e) { console.warn('Could not save chat history', e); }
   }
 
-  function toggleTheme() {
-    const current = root.getAttribute("data-theme") || "dark";
-    applyTheme(current === "dark" ? "light" : "dark");
-  }
-
+  /* ---------- theme ---------- */
   function initTheme() {
     const saved = localStorage.getItem(THEME_KEY);
-    if (saved) {
-      applyTheme(saved);
+    const preferred = saved || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', preferred);
+  }
+  themeToggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem(THEME_KEY, next);
+  });
+
+  /* ---------- sidebar ---------- */
+  collapseBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+  menuBtn.addEventListener('click', () => {
+    sidebar.classList.add('mobile-open');
+    scrim.classList.add('show');
+  });
+  scrim.addEventListener('click', closeMobileSidebar);
+  function closeMobileSidebar() {
+    sidebar.classList.remove('mobile-open');
+    scrim.classList.remove('show');
+  }
+
+  exploreBtn.addEventListener('click', () => {
+    alert('Explore is a placeholder — hook this up to a prompt gallery or plugin directory.');
+  });
+  settingsBtn.addEventListener('click', () => {
+    alert('Settings is a placeholder — wire this to your preferences panel.');
+  });
+
+  /* ---------- chat list rendering ---------- */
+  function renderChatHistory() {
+    chatHistoryEl.innerHTML = '';
+    const chats = Object.values(state.chats).sort((a, b) => b.updatedAt - a.updatedAt);
+    for (const chat of chats) {
+      const btn = document.createElement('button');
+      btn.className = 'chat-history-item' + (chat.id === state.activeChatId ? ' active' : '');
+      btn.textContent = chat.title || 'New chat';
+      btn.addEventListener('click', () => {
+        state.activeChatId = chat.id;
+        renderChatHistory();
+        renderMessages();
+        closeMobileSidebar();
+      });
+      chatHistoryEl.appendChild(btn);
+    }
+  }
+
+  function createChat() {
+    const id = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    state.chats[id] = { id, title: '', messages: [], updatedAt: Date.now() };
+    state.activeChatId = id;
+    saveChats();
+    renderChatHistory();
+    renderMessages();
+    return state.chats[id];
+  }
+
+  function getActiveChat() {
+    if (!state.activeChatId || !state.chats[state.activeChatId]) {
+      return createChat();
+    }
+    return state.chats[state.activeChatId];
+  }
+
+  newChatBtn.addEventListener('click', () => {
+    createChat();
+    closeMobileSidebar();
+    promptInput.focus();
+  });
+
+  /* ---------- message rendering ---------- */
+  function renderMessages() {
+    const chat = getActiveChat();
+    messagesEl.innerHTML = '';
+    if (!chat.messages.length) {
+      messagesEl.appendChild(emptyState);
+      emptyState.style.display = 'flex';
       return;
     }
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    applyTheme(prefersLight ? "light" : "dark");
+    for (const msg of chat.messages) {
+      messagesEl.appendChild(buildMessageRow(msg));
+    }
+    scrollToBottom();
   }
 
-  window.toggleTheme = toggleTheme;
+  function buildMessageRow(msg) {
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (msg.role === 'user' ? 'user' : 'ai');
 
-  /* ---------------- Mobile drawer ---------------- */
-  const menuToggle = document.getElementById("menuToggle");
-  const drawer = document.getElementById("mobileDrawer");
-  const scrim = document.getElementById("drawerScrim");
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar ' + (msg.role === 'user' ? 'user' : 'ai');
+    if (msg.role === 'user') {
+      avatar.textContent = 'F';
+    }
 
-  function openDrawer() {
-    drawer.classList.add("is-open");
-    scrim.hidden = false;
-    menuToggle.setAttribute("aria-expanded", "true");
+    const col = document.createElement('div');
+    col.className = 'bubble-col';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    if (msg.image) {
+      const img = document.createElement('img');
+      img.src = msg.image;
+      img.className = 'attach-thumb';
+      img.alt = 'Attached image';
+      bubble.appendChild(img);
+    }
+    if (msg.content) {
+      const textNode = document.createElement('div');
+      textNode.innerHTML = formatContent(msg.content);
+      bubble.appendChild(textNode);
+    }
+
+    col.appendChild(bubble);
+    row.appendChild(avatar);
+    row.appendChild(col);
+    msg._bubbleEl = bubble;
+    return row;
   }
-  function closeDrawer() {
-    drawer.classList.remove("is-open");
-    scrim.hidden = true;
-    menuToggle.setAttribute("aria-expanded", "false");
-  }
-  menuToggle?.addEventListener("click", () => {
-    drawer.classList.contains("is-open") ? closeDrawer() : openDrawer();
-  });
-  scrim?.addEventListener("click", closeDrawer);
 
-  /* ---------------- View routing (Chat / Explore / History / Settings) ---------------- */
-  const allNavButtons = document.querySelectorAll(".navlink[data-view]");
-  const panels = document.querySelectorAll(".view[data-view-panel]");
+  // Minimal, safe markdown-ish formatting: escape HTML, then handle code fences/inline code/bold
+  function formatContent(raw) {
+    const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let text = escape(raw);
 
-  function setActiveView(viewName) {
-    panels.forEach((p) => p.classList.toggle("is-active", p.dataset.viewPanel === viewName));
-    allNavButtons.forEach((b) => b.classList.toggle("is-active", b.dataset.view === viewName));
-    closeDrawer();
+    text = text.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+    return text || '';
   }
 
-  allNavButtons.forEach((btn) => {
-    btn.addEventListener("click", () => setActiveView(btn.dataset.view));
-  });
-
-  /* ---------------- New chat ---------------- */
-  function startNewChat() {
-    messagesEl.innerHTML = "";
-    emptyState.style.display = "flex";
-    setActiveView("chat");
-    promptInput.value = "";
-    autoResize();
-    promptInput.focus();
+  function scrollToBottom() {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-  document.getElementById("newChatBtn")?.addEventListener("click", startNewChat);
-  document.getElementById("newChatBtnMobile")?.addEventListener("click", startNewChat);
-  document.getElementById("settingsThemeBtn")?.addEventListener("click", toggleTheme);
 
-  /* ---------------- Suggestion chips ---------------- */
-  document.querySelectorAll(".chip[data-suggest]").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      promptInput.value = chip.dataset.suggest;
-      autoResize();
-      composerForm.requestSubmit();
-    });
-  });
-
-  /* ---------------- Chat ---------------- */
-  const chatScroll = document.getElementById("chatScroll");
-  const messagesEl = document.getElementById("messages");
-  const emptyState = document.getElementById("emptyState");
-  const composerForm = document.getElementById("composerForm");
-  const promptInput = document.getElementById("promptInput");
-  const sendBtn = document.getElementById("sendBtn");
-
-  const MODEL = "gryphe/mythomax-l2-13b:free";
-  const history = []; // { role: 'user' | 'assistant', content: string }
-
+  /* ---------- composer: auto-resize + enable send ---------- */
   function autoResize() {
-    promptInput.style.height = "auto";
-    promptInput.style.height = Math.min(promptInput.scrollHeight, 160) + "px";
+    promptInput.style.height = 'auto';
+    promptInput.style.height = Math.min(promptInput.scrollHeight, 200) + 'px';
   }
-  promptInput?.addEventListener("input", autoResize);
-  promptInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  function updateSendState() {
+    const hasText = promptInput.value.trim().length > 0;
+    sendBtn.disabled = !hasText && !state.pendingImage;
+  }
+  promptInput.addEventListener('input', () => { autoResize(); updateSendState(); });
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      composerForm.requestSubmit();
+      handleSend();
     }
   });
 
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+  /* ---------- suggestion chips ---------- */
+  document.querySelectorAll('.suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      promptInput.value = chip.dataset.prompt;
+      autoResize();
+      updateSendState();
+      handleSend();
+    });
+  });
+
+  /* ---------- plus menu ---------- */
+  plusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !plusMenu.classList.contains('open');
+    plusMenu.classList.toggle('open', willOpen);
+    plusBtn.classList.toggle('active', willOpen);
+    plusBtn.setAttribute('aria-expanded', String(willOpen));
+  });
+  document.addEventListener('click', (e) => {
+    if (!plusMenu.contains(e.target) && e.target !== plusBtn) {
+      plusMenu.classList.remove('open');
+      plusBtn.classList.remove('active');
+      plusBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  uploadImageBtn.addEventListener('click', () => {
+    fileInput.click();
+    plusMenu.classList.remove('open');
+    plusBtn.classList.remove('active');
+  });
+
+  webSearchBtn.addEventListener('click', () => {
+    state.webSearchOn = !state.webSearchOn;
+    webSearchToggle.dataset.on = String(state.webSearchOn);
+  });
+
+  imageGenBtn.addEventListener('click', () => {
+    plusMenu.classList.remove('open');
+    plusBtn.classList.remove('active');
+    promptInput.value = '/imagine ' + promptInput.value;
+    autoResize();
+    updateSendState();
+    promptInput.focus();
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.pendingImage = { dataUrl: reader.result, name: file.name };
+      renderAttachmentPreview();
+      updateSendState();
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  function renderAttachmentPreview() {
+    attachmentPreview.innerHTML = '';
+    if (!state.pendingImage) return;
+    const chip = document.createElement('div');
+    chip.className = 'attach-chip';
+    const img = document.createElement('img');
+    img.src = state.pendingImage.dataUrl;
+    const remove = document.createElement('button');
+    remove.className = 'remove-attach';
+    remove.textContent = '×';
+    remove.addEventListener('click', () => {
+      state.pendingImage = null;
+      renderAttachmentPreview();
+      updateSendState();
+    });
+    chip.appendChild(img);
+    chip.appendChild(remove);
+    attachmentPreview.appendChild(chip);
   }
 
-  // Very small, safe markdown-lite: fenced code blocks + inline code + bold.
-  function renderContent(text) {
-    const escaped = escapeHtml(text);
-    const withBlocks = escaped.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
-    const withInline = withBlocks.replace(/`([^`]+)`/g, "<code>$1</code>");
-    const withBold = withInline.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    return withBold;
-  }
+  /* ---------- voice input (Web Speech API) ---------- */
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognizer = null;
+  let isRecording = false;
 
-  function addMessage(role, text) {
-    emptyState.style.display = "none";
+  if (SpeechRecognitionCtor) {
+    recognizer = new SpeechRecognitionCtor();
+    recognizer.continuous = true;
+    recognizer.interimResults = true;
+    recognizer.lang = 'en-US';
 
-    const wrap = document.createElement("div");
-    wrap.className = `msg msg--${role === "user" ? "user" : "ai"}`;
+    let baseText = '';
 
-    const avatar = document.createElement("div");
-    avatar.className = "msg__avatar";
-    avatar.textContent = role === "user" ? "You" : "F";
-
-    const body = document.createElement("div");
-    body.className = "msg__body";
-
-    const name = document.createElement("div");
-    name.className = "msg__name";
-    name.textContent = role === "user" ? "You" : "FaddenAI";
-
-    const textEl = document.createElement("div");
-    textEl.className = "msg__text";
-    textEl.innerHTML = renderContent(text);
-
-    body.append(name, textEl);
-    wrap.append(avatar, body);
-    messagesEl.appendChild(wrap);
-    chatScroll.scrollTop = chatScroll.scrollHeight;
-    return textEl;
-  }
-
-  function addTypingIndicator() {
-    emptyState.style.display = "none";
-    const wrap = document.createElement("div");
-    wrap.className = "msg msg--ai";
-    wrap.id = "typingIndicator";
-
-    const avatar = document.createElement("div");
-    avatar.className = "msg__avatar";
-    avatar.textContent = "F";
-
-    const body = document.createElement("div");
-    body.className = "msg__body";
-    body.innerHTML = `<div class="msg__name">FaddenAI</div><div class="typing"><span></span><span></span><span></span></div>`;
-
-    wrap.append(avatar, body);
-    messagesEl.appendChild(wrap);
-    chatScroll.scrollTop = chatScroll.scrollHeight;
-  }
-
-  function removeTypingIndicator() {
-    document.getElementById("typingIndicator")?.remove();
-  }
-
-  async function callFaddenAPI(messages) {
-    // This hits OUR serverless function (see /api/chat.js), which holds
-    // the OpenRouter key in an environment variable on Vercel. The key
-    // is never present in any file that gets committed to the repo.
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: MODEL, messages }),
+    recognizer.addEventListener('start', () => {
+      isRecording = true;
+      baseText = promptInput.value ? promptInput.value.trim() + ' ' : '';
+      micBtn.classList.add('recording');
     });
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => "");
-      throw new Error(`Server responded ${res.status}: ${errBody || "no details"}`);
-    }
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content;
-    if (!reply) throw new Error("No reply returned by the model.");
-    return reply;
+    recognizer.addEventListener('result', (event) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) final += transcript;
+        else interim += transcript;
+      }
+      promptInput.value = (baseText + final + interim).trim();
+      if (final) baseText = (baseText + final).trim() + ' ';
+      autoResize();
+      updateSendState();
+    });
+
+    recognizer.addEventListener('end', () => {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+    });
+
+    recognizer.addEventListener('error', () => {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (isRecording) {
+        recognizer.stop();
+      } else {
+        try { recognizer.start(); } catch (e) { /* already started */ }
+      }
+    });
+  } else {
+    micBtn.addEventListener('click', () => {
+      alert('Voice input is not supported in this browser. Try Chrome or Edge.');
+    });
   }
 
-  async function sendMessage(rawText) {
-    const text = (rawText ?? promptInput.value).trim();
-    if (!text) return;
+  /* ---------- send flow ---------- */
+  async function handleSend() {
+    const text = promptInput.value.trim();
+    if (!text && !state.pendingImage) return;
+    if (state.isStreaming) return;
 
-    addMessage("user", text);
-    history.push({ role: "user", content: text });
+    const chat = getActiveChat();
+    if (!chat.title) chat.title = text.slice(0, 40) || 'Image message';
 
-    promptInput.value = "";
+    const userMsg = { role: 'user', content: text };
+    if (state.pendingImage) userMsg.image = state.pendingImage.dataUrl;
+    chat.messages.push(userMsg);
+    chat.updatedAt = Date.now();
+
+    promptInput.value = '';
     autoResize();
+    state.pendingImage = null;
+    renderAttachmentPreview();
+    updateSendState();
+    if (isRecording) recognizer.stop();
+
+    saveChats();
+    renderChatHistory();
+    renderMessages();
+
+    await streamAssistantReply(chat);
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+
+  async function streamAssistantReply(chat) {
+    state.isStreaming = true;
     sendBtn.disabled = true;
-    addTypingIndicator();
+
+    const aiMsg = { role: 'assistant', content: '' };
+    chat.messages.push(aiMsg);
+    const row = buildMessageRow(aiMsg);
+    const avatarEl = row.querySelector('.avatar.ai');
+    avatarEl.classList.add('thinking');
+    emptyState.style.display = 'none';
+    messagesEl.appendChild(row);
+    scrollToBottom();
+
+    const bubble = aiMsg._bubbleEl;
+    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+
+    const apiMessages = chat.messages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .slice(0, -1) // exclude the empty assistant placeholder
+      .map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const reply = await callFaddenAPI(history);
-      removeTypingIndicator();
-      addMessage("assistant", reply);
-      history.push({ role: "assistant", content: reply });
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: apiMessages,
+          webSearch: state.webSearchOn,
+          image: chat.messages[chat.messages.length - 2]?.image || null,
+        }),
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error('Request failed: ' + res.status);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      let firstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (!chunk) continue;
+        if (firstChunk) { bubble.innerHTML = ''; firstChunk = false; }
+        full += chunk;
+        aiMsg.content = full;
+        bubble.innerHTML = formatContent(full);
+        scrollToBottom();
+      }
+
+      if (!full) {
+        bubble.innerHTML = formatContent("I didn't get a response back — try that again?");
+      }
     } catch (err) {
-      removeTypingIndicator();
-      const el = addMessage("assistant", `Something went wrong talking to the model: ${err.message}`);
-      el.closest(".msg").classList.add("msg--error");
-      console.error("FaddenAI chat error:", err);
+      console.error(err);
+      bubble.innerHTML = formatContent('Something went wrong reaching the model. Please try again.');
     } finally {
-      sendBtn.disabled = false;
-      promptInput.focus();
+      avatarEl.classList.remove('thinking');
+      state.isStreaming = false;
+      updateSendState();
+      chat.updatedAt = Date.now();
+      saveChats();
+      renderChatHistory();
     }
   }
 
-  window.sendMessage = sendMessage;
+  /* ---------- init ---------- */
+  function init() {
+    initTheme();
+    loadChats();
+    if (Object.keys(state.chats).length === 0) {
+      createChat();
+    } else {
+      state.activeChatId = Object.values(state.chats).sort((a, b) => b.updatedAt - a.updatedAt)[0].id;
+    }
+    renderChatHistory();
+    renderMessages();
+    updateSendState();
+  }
 
-  composerForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    sendMessage();
-  });
-
-  /* ---------------- Init ---------------- */
-  initTheme();
-  document.getElementById("themeToggle")?.addEventListener("click", toggleTheme);
+  init();
 })();
