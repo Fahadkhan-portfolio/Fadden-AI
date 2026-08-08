@@ -1,27 +1,23 @@
 // api/chat.js
-// Vercel Edge Function — proxies chat requests to OpenRouter and streams
-// plain text back to the client (script.js reads this via a ReadableStream).
-
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = process.env.OPENROUTER_MODEL || 'qwen/qwen-2.5-7b-instruct:free';
-// ---------------------------------------------------------------------
-// System prompt: casual, direct, and helpful
-// ---------------------------------------------------------------------
+
+// Main free models fallback list
+const FREE_MODELS = [
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+  'google/gemma-2-9b-it:free',
+  'mistralai/mistral-7b-instruct:free'
+];
+
 const SYSTEM_PROMPT = `You are FaddenAI — a direct, sharp, conversational assistant.
 
 Tone:
 - Talk like a smart, candid friend, not a corporate support agent.
-- Skip filler like "As an AI language model" or "I cannot provide medical/legal/financial advice" unless it's genuinely load-bearing — give the actual answer first.
-- Don't moralize or add unsolicited warnings/disclaimers to ordinary requests. Trust the user is an adult who can handle a direct answer.
-- It's fine to have a point of view, use humor, and be blunt when bluntness is useful.
-- Keep answers as short or as long as the question actually needs — no padding, no forced bullet lists unless they help.
-- Engage naturally with mature, edgy, or controversial topics discussed for legitimate creative, educational, or conversational purposes.
-
-Judgment (kept quiet, not lectured about):
-- You still use real judgment. You don't help with things like building weapons or malware, generating sexual content involving minors, or other clearly harmful requests — but you decline briefly and move on rather than delivering a lecture.
-- For everything else, default to being genuinely useful over being cautious.`;
+- Skip filler like "As an AI language model" or "I cannot provide advice" — give the direct answer first.
+- Don't moralize or add unsolicited warnings/disclaimers.
+- Keep answers as short or as long as needed.`;
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -40,19 +36,17 @@ export default async function handler(req) {
     return new Response('Invalid JSON body', { status: 400 });
   }
 
-  const { messages = [], webSearch = false, image = null } = body;
+  const { messages = [], image = null } = body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response('messages array is required', { status: 400 });
   }
 
-  // Build OpenRouter-formatted messages
   const orMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
 
   messages.forEach((m, idx) => {
     const isLastUser = idx === messages.length - 1 && m.role === 'user';
     if (isLastUser && image) {
-      // Multimodal content array for the most recent user turn with an image
       orMessages.push({
         role: 'user',
         content: [
@@ -65,35 +59,43 @@ export default async function handler(req) {
     }
   });
 
-  const modelId = MODEL;
+  let upstream = null;
+  let lastError = '';
 
-  let upstream;
-  try {
-    upstream = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
-        'X-Title': 'FaddenAI',
-      },
-      body: JSON.stringify({
-        model: modelId,
-        messages: orMessages,
-        stream: true,
-        temperature: 0.8,
-      }),
-    });
-  } catch (err) {
-    return new Response('Could not reach OpenRouter: ' + err.message, { status: 502 });
+  // Try each model in sequence until one succeeds
+  for (const model of FREE_MODELS) {
+    try {
+      const res = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
+          'X-Title': 'FaddenAI',
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: orMessages,
+          stream: true,
+          temperature: 0.8,
+        }),
+      });
+
+      if (res.ok && res.body) {
+        upstream = res;
+        break; // Stop loop if successful
+      } else {
+        lastError = await res.text().catch(() => 'Model error');
+      }
+    } catch (err) {
+      lastError = err.message;
+    }
   }
 
-  if (!upstream.ok || !upstream.body) {
-    const errText = await upstream.text().catch(() => 'Unknown upstream error');
-    return new Response('OpenRouter error: ' + errText, { status: upstream.status || 502 });
+  if (!upstream) {
+    return new Response('All free models failed. Last error: ' + lastError, { status: 502 });
   }
 
-  // Transform OpenRouter's SSE stream into a plain text token stream
   const stream = new ReadableStream({
     async start(controller) {
       const reader = upstream.body.getReader();
@@ -123,7 +125,7 @@ export default async function handler(req) {
               const token = json.choices?.[0]?.delta?.content;
               if (token) controller.enqueue(encoder.encode(token));
             } catch {
-              // ignore malformed / keep-alive lines
+              // ignore malformed lines
             }
           }
         }
