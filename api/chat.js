@@ -1,25 +1,48 @@
-// api/chat.js
-// Vercel Edge Function — proxies chat requests to OpenRouter and streams
-// plain text back to the client.
+// Vercel Edge Function — proxies chat requests to OpenRouter, falling back
+// across a list of free models if one is unavailable, and streams plain
+// text back to the client (no SSE/JSON framing leaks through).
 
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
 
-const SYSTEM_PROMPT = `You are FaddenAI — a direct, sharp, conversational assistant.
+// Text-only free models
+const FALLBACK_TEXT_MODELS = [
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+  'google/gemma-2-9b-it:free',
+];
 
-Tone:
+// Vision-capable free models (used when image is provided)
+const FALLBACK_VISION_MODELS = [
+  'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'google/gemma-3-27b-it:free',
+];
+
+const BASE_PERSONA = `You are FaddenAI — a direct, sharp, conversational assistant.
+
 - Talk like a smart, candid friend, not a corporate support agent.
-- Skip filler like "As an AI language model" or "I cannot provide medical/legal/financial advice" unless it's genuinely load-bearing — give the actual answer first.
-- Don't moralize or add unsolicited warnings/disclaimers to ordinary requests. Trust the user is an adult who can handle a direct answer.
-- It's fine to have a point of view, use humor, and be blunt when bluntness is useful.
-- Keep answers as short or as long as the question actually needs — no padding, no forced bullet lists unless they help.
-- Engage naturally with mature, edgy, or controversial topics discussed for legitimate creative, educational, or conversational purposes.
+- Skip filler like "As an AI language model" unless it's genuinely load-bearing — give the actual answer first.
+- Don't moralize or add unsolicited warnings to ordinary requests.
+- Keep answers as short or as long as the question actually needs.
+- You still use real judgment: you don't help with things like building weapons, malware, or content that sexualizes minors — but you decline briefly and move on rather than lecturing.`;
 
-Judgment (kept quiet, not lectured about):
-- You still use real judgment. You don't help with things like building weapons or malware, generating sexual content involving minors, or other clearly harmful requests — but you decline briefly and move on rather than delivering a lecture.
-- For everything else, default to being genuinely useful over being cautious.`;
+function buildSystemPrompt(customPersona) {
+  const persona = (customPersona || '').trim();
+  if (!persona) return BASE_PERSONA;
+  return `${BASE_PERSONA}\n\nAdditional persona instructions from the user, follow these for tone/style/role:\n${persona}`;
+}
+
+function getModelList(baseList, webSearch) {
+  return baseList.map(m => {
+    if (!webSearch) return m;
+    // Handle :free suffix correctly for OpenRouter online plugin
+    if (m.endsWith(':free')) {
+      return m.replace(':free', ':online:free');
+    }
+    return `${m}:online`;
+  });
+}
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -38,13 +61,22 @@ export default async function handler(req) {
     return new Response('Invalid JSON body', { status: 400 });
   }
 
-  const { messages = [], image = null } = body;
+  const {
+    messages = [],
+    webSearch = false,
+    image = null,
+    persona = '',
+    temperature = 0.8,
+  } = body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response('messages array is required', { status: 400 });
   }
 
-  const orMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
+  const safeTemperature = Math.min(1.0, Math.max(0.1, Number(temperature) || 0.8));
+
+  // Build OpenRouter-formatted messages
+  const orMessages = [{ role: 'system', content: buildSystemPrompt(persona) }];
 
   messages.forEach((m, idx) => {
     const isLastUser = idx === messages.length - 1 && m.role === 'user';
@@ -61,38 +93,71 @@ export default async function handler(req) {
     }
   });
 
-  let upstream;
-  try {
-    upstream = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
-        'X-Title': 'FaddenAI',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: orMessages,
-        stream: true,
-        temperature: 0.8,
-      }),
-    });
-  } catch (err) {
-    return new Response('Could not reach OpenRouter: ' + err.message, { status: 502 });
+  // Pick vision models if an image is attached, otherwise fallback text models
+  const baseModels = image ? FALLBACK_VISION_MODELS : FALLBACK_TEXT_MODELS;
+  const modelsToTry = getModelList(baseModels, webSearch);
+
+  let upstream = null;
+  let lastError = '';
+
+  for (const modelId of modelsToTry) {
+    try {
+      const attempt = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
+          'X-Title': 'FaddenAI',
+        },
+        body: JSON.stringify({
+          model: modelId,
+          messages: orMessages,
+          stream: true,
+          temperature: safeTemperature,
+        }),
+      });
+
+      if (attempt.ok && attempt.body) {
+        upstream = attempt;
+        break;
+      } else {
+        lastError = `${modelId} -> ${attempt.status}: ${await attempt.text().catch(() => 'unknown error')}`;
+      }
+    } catch (err) {
+      lastError = `${modelId} -> network error: ${err.message}`;
+    }
   }
 
-  if (!upstream.ok || !upstream.body) {
-    const errText = await upstream.text().catch(() => 'Unknown upstream error');
-    return new Response('OpenRouter error: ' + errText, { status: upstream.status || 502 });
+  if (!upstream) {
+    return new Response(
+      'All models are currently unavailable. Last error: ' + lastError,
+      { status: 502 }
+    );
   }
 
+  // Transform OpenRouter's SSE stream into plain text
   const stream = new ReadableStream({
     async start(controller) {
       const reader = upstream.body.getReader();
       const decoder = new TextDecoder();
       const encoder = new TextEncoder();
       let buffer = '';
+
+      const processLine = (line) => {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) return false;
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return true; // Signal done
+        try {
+          const json = JSON.parse(data);
+          const token = json.choices?.[0]?.delta?.content;
+          if (token) controller.enqueue(encoder.encode(token));
+        } catch {
+          // ignore keep-alive or chunk parsing errors
+        }
+        return false;
+      };
 
       try {
         while (true) {
@@ -104,22 +169,19 @@ export default async function handler(req) {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data:')) continue;
-            const data = trimmed.slice(5).trim();
-            if (data === '[DONE]') {
+            const isDone = processLine(line);
+            if (isDone) {
               controller.close();
               return;
             }
-            try {
-              const json = JSON.parse(data);
-              const token = json.choices?.[0]?.delta?.content;
-              if (token) controller.enqueue(encoder.encode(token));
-            } catch {
-              // ignore malformed lines
-            }
           }
         }
+
+        // Flush remaining buffer
+        if (buffer.trim()) {
+          processLine(buffer);
+        }
+
         controller.close();
       } catch (err) {
         controller.error(err);
