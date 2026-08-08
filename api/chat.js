@@ -6,17 +6,17 @@ export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Text-only free models
+// Currently ACTIVE & WORKING OpenRouter free model slugs
 const FALLBACK_TEXT_MODELS = [
-  'meta-llama/llama-3.1-8b-instruct:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'deepseek/deepseek-r1:free',
   'qwen/qwen-2.5-7b-instruct:free',
-  'google/gemma-2-9b-it:free',
+  'mistralai/mistral-7b-instruct:free'
 ];
 
 // Vision-capable free models (used when image is provided)
 const FALLBACK_VISION_MODELS = [
   'meta-llama/llama-3.2-11b-vision-instruct:free',
-  'google/gemma-3-27b-it:free',
 ];
 
 const BASE_PERSONA = `You are FaddenAI — a direct, sharp, conversational assistant.
@@ -36,7 +36,7 @@ function buildSystemPrompt(customPersona) {
 function getModelList(baseList, webSearch) {
   return baseList.map(m => {
     if (!webSearch) return m;
-    // Handle :free suffix correctly for OpenRouter online plugin
+    // Append online routing correctly for OpenRouter
     if (m.endsWith(':free')) {
       return m.replace(':free', ':online:free');
     }
