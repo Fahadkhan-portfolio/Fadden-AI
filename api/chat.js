@@ -73,7 +73,7 @@ export default async function handler(req) {
     }
   });
 
-  const modelId = MODEL;
+  const modelId = webSearch ? `${MODEL}:online` : MODEL;
 
   let upstream;
   try {
