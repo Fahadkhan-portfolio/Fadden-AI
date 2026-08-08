@@ -5,8 +5,7 @@
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
-
+const MODEL = process.env.OPENROUTER_MODEL || 'qwen/qwen-2.5-7b-instruct:free';
 // ---------------------------------------------------------------------
 // System prompt: casual, direct, and helpful
 // ---------------------------------------------------------------------
