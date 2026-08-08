@@ -1,126 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <title>FaddenAI</title>
-<meta name="theme-color" content="#0B0E14" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ===== Header ===== -->
-  <header class="topbar">
-    <div class="topbar__left">
-      <button id="menuToggle" class="iconBtn onlyMobile" aria-label="Open menu" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+<div class="app">
+
+  <!-- Mobile scrim -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
       <div class="brand">
-        <span class="brand__mark" aria-hidden="true"></span>
-        <span class="brand__name">FaddenAI</span>
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">FaddenAI</span>
       </div>
+      <button class="icon-btn sidebar-collapse-btn" id="collapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
 
-    <nav class="navlinks" id="navlinks" aria-label="Primary">
-      <button class="navlink is-active" data-view="chat" type="button">Chat</button>
-      <button class="navlink" data-view="explore" type="button">Explore</button>
-      <button class="navlink" data-view="history" type="button">History</button>
-      <button class="navlink" data-view="settings" type="button">Settings</button>
+    <button class="new-chat-btn" id="newChatBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>New chat</span>
+    </button>
+
+    <div class="sidebar-section-label"><span>Chats</span></div>
+    <nav class="chat-history" id="chatHistory">
+      <!-- chat history items injected by JS -->
     </nav>
 
-    <div class="topbar__right">
-      <button id="themeToggle" class="iconBtn themeToggle" aria-label="Toggle dark and light theme" title="Toggle theme">
-        <span class="themeToggle__sun" aria-hidden="true">☀️</span>
-        <span class="themeToggle__moon" aria-hidden="true">🌙</span>
+    <div class="sidebar-bottom">
+      <button class="side-link" id="exploreBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.2H22l-6 4.4 2.3 7.1L12 16.3 5.7 20.7 8 13.6 2 9.2h7.6L12 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Explore</span>
       </button>
-      <button id="newChatBtn" class="btn btn--ghost onlyDesktop" type="button">New chat</button>
+      <button class="side-link" id="settingsBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 13a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V19a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.6 13a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.6 6.6a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001.55-1V1a2 2 0 114 0v.09a1.7 1.7 0 001.55 1 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V6.6a1.7 1.7 0 001 1.55H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span>Settings</span>
+      </button>
+      <div class="user-chip">
+        <span class="user-avatar">F</span>
+        <span class="user-name">Fadden</span>
+      </div>
     </div>
-  </header>
+  </aside>
 
-  <!-- ===== Mobile nav drawer ===== -->
-  <div id="mobileDrawer" class="mobileDrawer" aria-hidden="true">
-    <button class="navlink is-active" data-view="chat" type="button">Chat</button>
-    <button class="navlink" data-view="explore" type="button">Explore</button>
-    <button class="navlink" data-view="history" type="button">History</button>
-    <button class="navlink" data-view="settings" type="button">Settings</button>
-    <button class="btn btn--ghost" id="newChatBtnMobile" type="button">New chat</button>
-  </div>
-  <div id="drawerScrim" class="drawerScrim" hidden></div>
+  <!-- ============ MAIN ============ -->
+  <div class="main">
 
-  <!-- ===== Main views ===== -->
-  <main class="app">
+    <header class="main-header">
+      <div class="header-left">
+        <button class="icon-btn only-mobile" id="menuBtn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="model-pill" id="modelPill">
+          <span class="model-dot"></span>
+          <span id="modelName">FaddenAI &middot; Nova-1</span>
+          <svg viewBox="0 0 24 24" fill="none" class="chev"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-sun"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" class="icon-moon"><path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </header>
 
-    <!-- Chat view -->
-    <section class="view is-active" data-view-panel="chat" id="chatPanel">
-      <div class="chatScroll" id="chatScroll">
-        <div class="emptyState" id="emptyState">
-          <span class="emptyState__mark" aria-hidden="true"></span>
-          <h1>What can I help you build today?</h1>
-          <p>Ask FaddenAI anything — code, writing, ideas, or a quick answer.</p>
-          <div class="suggestions">
-            <button class="chip" type="button" data-suggest="Explain how async/await works in JavaScript, with an example.">Explain async/await</button>
-            <button class="chip" type="button" data-suggest="Give me 5 catchy taglines for an AI chat app called FaddenAI.">Taglines for FaddenAI</button>
-            <button class="chip" type="button" data-suggest="Write a Python function that reverses a linked list.">Reverse a linked list</button>
+    <!-- ============ MESSAGES ============ -->
+    <main class="chat-window" id="chatWindow">
+      <div class="messages" id="messages">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-mark" aria-hidden="true"></div>
+          <h1>What are we figuring out today?</h1>
+          <p>Ask anything, paste something to fix, or drop an image. FaddenAI keeps it direct.</p>
+          <div class="suggestion-row">
+            <button class="suggestion-chip" data-prompt="Explain quantum entanglement like I'm smart but not a physicist.">Explain entanglement simply</button>
+            <button class="suggestion-chip" data-prompt="Draft a blunt, no-fluff email declining a meeting.">Draft a blunt email</button>
+            <button class="suggestion-chip" data-prompt="Give me a 3-day workout split for building strength.">3-day strength split</button>
+            <button class="suggestion-chip" data-prompt="Debug this: why would a flexbox child not shrink below its content size?">Why won't flex-item shrink?</button>
           </div>
         </div>
-        <div class="messages" id="messages" role="log" aria-live="polite"></div>
       </div>
-    </section>
+    </main>
 
-    <!-- Explore view -->
-    <section class="view" data-view-panel="explore">
-      <div class="placeholderView">
-        <h2>Explore</h2>
-        <p>Prompt packs and saved templates will live here.</p>
-      </div>
-    </section>
+    <!-- ============ COMPOSER ============ -->
+    <div class="composer-wrap">
+      <div class="composer" id="composer">
 
-    <!-- History view -->
-    <section class="view" data-view-panel="history">
-      <div class="placeholderView">
-        <h2>History</h2>
-        <p>Your past conversations will show up here once chats are saved.</p>
-      </div>
-    </section>
-
-    <!-- Settings view -->
-    <section class="view" data-view-panel="settings">
-      <div class="placeholderView">
-        <h2>Settings</h2>
-        <p>Model, theme, and account preferences.</p>
-        <div class="settingsRow">
-          <span>Appearance</span>
-          <button class="btn btn--ghost" id="settingsThemeBtn" type="button">Toggle theme</button>
+        <div class="plus-menu" id="plusMenu">
+          <button class="plus-item" id="uploadImageBtn" data-action="upload">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M21 15l-5-5-9 9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span>Upload image</span>
+          </button>
+          <button class="plus-item" id="webSearchBtn" data-action="websearch">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>Web search</span>
+            <span class="toggle-pill" id="webSearchToggle" data-on="false"></span>
+          </button>
+          <button class="plus-item" id="imageGenBtn" data-action="imagegen">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 3v4M3 5h4M19 13v4M17 15h4M11 3l1.7 4.6L17 9l-4.3 1.4L11 15l-1.7-4.6L5 9l4.3-1.4L11 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span>Generate image</span>
+          </button>
         </div>
-        <div class="settingsRow">
-          <span>Model</span>
-          <span class="modelTag">google/gemini-2.0-flash-lite-preview-02-05:free</span>
-        </div>
-      </div>
-    </section>
-  </main>
 
-  <!-- ===== Composer (fixed bottom bar, chat view only) ===== -->
-  <form class="composer" id="composerForm">
-    <div class="composer__inner">
-      <textarea
-        id="promptInput"
-        class="composer__input"
-        placeholder="Message FaddenAI…"
-        rows="1"
-        autocomplete="off"
-        aria-label="Message FaddenAI"
-      ></textarea>
-      <button type="submit" class="sendBtn" id="sendBtn" aria-label="Send message">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
-      </button>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+
+        <button class="composer-btn plus-btn" id="plusBtn" aria-label="Add attachment or tool" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="composer-input-area">
+          <div class="attachment-preview" id="attachmentPreview"></div>
+          <textarea
+            id="promptInput"
+            class="prompt-input"
+            placeholder="Message FaddenAI…"
+            rows="1"
+            aria-label="Message FaddenAI"
+          ></textarea>
+        </div>
+
+        <button class="composer-btn mic-btn" id="micBtn" aria-label="Voice input" title="Voice input">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z" stroke="currentColor" stroke-width="1.8"/><path d="M19 11a7 7 0 01-14 0M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+
+        <button class="composer-btn send-btn" id="sendBtn" aria-label="Send message" disabled>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <p class="composer-hint">FaddenAI can make mistakes. Check anything that matters.</p>
     </div>
-    <p class="composer__hint">FaddenAI can make mistakes. Check important info.</p>
-  </form>
 
-  <script src="script.js"></script>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
