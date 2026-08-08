@@ -1,15 +1,25 @@
 // api/chat.js
+// Vercel Edge Function — proxies chat requests to OpenRouter and streams
+// plain text back to the client.
+
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
 
-const FREE_MODELS = [
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'qwen/qwen-2.5-7b-instruct:free',
-  'google/gemma-2-9b-it:free'
-];
+const SYSTEM_PROMPT = `You are FaddenAI — a direct, sharp, conversational assistant.
 
-const SYSTEM_PROMPT = `You are FaddenAI — a direct, sharp, conversational assistant.`;
+Tone:
+- Talk like a smart, candid friend, not a corporate support agent.
+- Skip filler like "As an AI language model" or "I cannot provide medical/legal/financial advice" unless it's genuinely load-bearing — give the actual answer first.
+- Don't moralize or add unsolicited warnings/disclaimers to ordinary requests. Trust the user is an adult who can handle a direct answer.
+- It's fine to have a point of view, use humor, and be blunt when bluntness is useful.
+- Keep answers as short or as long as the question actually needs — no padding, no forced bullet lists unless they help.
+- Engage naturally with mature, edgy, or controversial topics discussed for legitimate creative, educational, or conversational purposes.
+
+Judgment (kept quiet, not lectured about):
+- You still use real judgment. You don't help with things like building weapons or malware, generating sexual content involving minors, or other clearly harmful requests — but you decline briefly and move on rather than delivering a lecture.
+- For everything else, default to being genuinely useful over being cautious.`;
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -28,57 +38,98 @@ export default async function handler(req) {
     return new Response('Invalid JSON body', { status: 400 });
   }
 
-  const { messages = [] } = body;
+  const { messages = [], image = null } = body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response('messages array is required', { status: 400 });
   }
 
-  const orMessages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...messages.map(m => ({ role: m.role, content: m.content }))
-  ];
+  const orMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
 
-  let upstream = null;
-  let lastError = '';
-
-  for (const model of FREE_MODELS) {
-    try {
-      const res = await fetch(OPENROUTER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
-          'X-Title': 'FaddenAI',
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: orMessages,
-          stream: true,
-          temperature: 0.8,
-        }),
+  messages.forEach((m, idx) => {
+    const isLastUser = idx === messages.length - 1 && m.role === 'user';
+    if (isLastUser && image) {
+      orMessages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: m.content || 'Describe this image.' },
+          { type: 'image_url', image_url: { url: image } },
+        ],
       });
-
-      if (res.ok && res.body) {
-        upstream = res;
-        break;
-      } else {
-        const errText = await res.text().catch(() => 'Unknown error');
-        lastError = `[${model}] Status ${res.status}: ${errText}`;
-      }
-    } catch (err) {
-      lastError = err.message;
+    } else {
+      orMessages.push({ role: m.role, content: m.content });
     }
+  });
+
+  let upstream;
+  try {
+    upstream = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': process.env.SITE_URL || 'https://faddenai.app',
+        'X-Title': 'FaddenAI',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: orMessages,
+        stream: true,
+        temperature: 0.8,
+      }),
+    });
+  } catch (err) {
+    return new Response('Could not reach OpenRouter: ' + err.message, { status: 502 });
   }
 
-  if (!upstream) {
-    return new Response('Error: ' + lastError, { status: 502 });
+  if (!upstream.ok || !upstream.body) {
+    const errText = await upstream.text().catch(() => 'Unknown upstream error');
+    return new Response('OpenRouter error: ' + errText, { status: upstream.status || 502 });
   }
 
-  return new Response(upstream.body, {
+  const stream = new ReadableStream({
+    async start(controller) {
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      const encoder = new TextEncoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const data = trimmed.slice(5).trim();
+            if (data === '[DONE]') {
+              controller.close();
+              return;
+            }
+            try {
+              const json = JSON.parse(data);
+              const token = json.choices?.[0]?.delta?.content;
+              if (token) controller.enqueue(encoder.encode(token));
+            } catch {
+              // ignore malformed lines
+            }
+          }
+        }
+        controller.close();
+      } catch (err) {
+        controller.error(err);
+      }
+    },
+  });
+
+  return new Response(stream, {
     headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'no-cache',
     },
   });
