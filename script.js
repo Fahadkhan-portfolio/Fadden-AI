@@ -101,7 +101,7 @@
   const promptInput = document.getElementById("promptInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  const MODEL = "openrouter/free";
+  const MODEL = "gryphe/mythomax-l2-13b:free";
   const history = []; // { role: 'user' | 'assistant', content: string }
 
   function autoResize() {
