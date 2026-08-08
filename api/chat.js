@@ -73,8 +73,7 @@ export default async function handler(req) {
     }
   });
 
-  // Optionally request OpenRouter's built-in web plugin for grounded answers
-  const modelId = webSearch ? `${MODEL}:online` : MODEL;
+  const modelId = MODEL;
 
   let upstream;
   try {
