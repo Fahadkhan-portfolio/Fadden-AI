@@ -5,17 +5,10 @@
 export const config = { runtime: 'edge' };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'openrouter/free';
+const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
 
 // ---------------------------------------------------------------------
-// System prompt: casual, direct, and helpful — not preachy, not padded
-// with unnecessary disclaimers, and willing to engage with mature or
-// edgy-but-legal topics in a matter-of-fact way. It still exercises real
-// judgment: it won't help with things like building weapons, malware,
-// or content that sexualizes minors, no matter how the request is framed.
-// That judgment is a feature, not a bug — a "say yes to literally
-// anything" system prompt isn't something I'll wire in here, but this
-// keeps things as loose and human as safely possible.
+// System prompt: casual, direct, and helpful
 // ---------------------------------------------------------------------
 const SYSTEM_PROMPT = `You are FaddenAI — a direct, sharp, conversational assistant.
 
@@ -73,7 +66,7 @@ export default async function handler(req) {
     }
   });
 
-  const modelId = webSearch ? `${MODEL}:online` : MODEL;
+  const modelId = MODEL;
 
   let upstream;
   try {
